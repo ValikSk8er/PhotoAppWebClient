@@ -26,30 +26,55 @@ import com.appsdeveloperblog.ws.clients.photoappwebclient.response.AlbumRest;
 
 @Controller
 public class AlbumsController {
-	
 
-	
+	@Autowired
+	OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
+
 	@Autowired
 	RestTemplate restTemplate;
 
 	@GetMapping("/albums")
-	public String getAlbums(Model model) {
+	public String getAlbums(Model model,
+							@AuthenticationPrincipal OidcUser principal) {
 
-		
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
 
-		
+		OAuth2AuthorizedClient oAuth2AuthorizedClient = oAuth2AuthorizedClientService.loadAuthorizedClient(oauthToken.getAuthorizedClientRegistrationId(),
+				oauthToken.getName());
+
+		String jwtAccessToken = oAuth2AuthorizedClient.getAccessToken().getTokenValue();
+		System.out.println("jwtAccessToken " + jwtAccessToken);
+
+		System.out.println("Principal " + principal);
+		OidcIdToken idToken = principal.getIdToken();
+		String tokenValue = idToken.getTokenValue();
+		System.out.println("idTokenValue = " + tokenValue);
+
+		String url = "http://localhost:8082/albums";
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.add("Authorization", "Bearer " + jwtAccessToken);
+
+		HttpEntity<List<AlbumRest>> httpEntity = new HttpEntity<>(httpHeaders);
+
+		ResponseEntity<List<AlbumRest>> responseEntity = restTemplate.exchange(url, HttpMethod.GET, httpEntity, new ParameterizedTypeReference<List<AlbumRest>>() {});
+
+		List<AlbumRest> albumRests = responseEntity.getBody();
+
 //		AlbumRest album = new AlbumRest();
 //		album.setAlbumId("albumOne");
 //		album.setAlbumTitle("Album one title");
 //		album.setAlbumUrl("http://localhost:8082/albums/1");
-//		
+//
 //		AlbumRest album2 = new AlbumRest();
 //		album2.setAlbumId("albumTwo");
 //		album2.setAlbumTitle("Album two title");
 //		album2.setAlbumUrl("http://localhost:8082/albums/2");
-// 
+//
+//		List<AlbumRest> albumRests = Arrays.asList(album, album2);
 
-		
+		model.addAttribute("albums", albumRests);
+
 		return "albums";
 	}
 	
