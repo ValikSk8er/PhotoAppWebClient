@@ -27,42 +27,16 @@ import com.appsdeveloperblog.ws.clients.photoappwebclient.response.AlbumRest;
 @Controller
 public class AlbumsController {
 	
-	@Autowired
-	OAuth2AuthorizedClientService oauth2ClientService;
+
 	
 	@Autowired
 	RestTemplate restTemplate;
 
 	@GetMapping("/albums")
-	public String getAlbums(Model model, 
-			@AuthenticationPrincipal OidcUser principal) {
+	public String getAlbums(Model model) {
+
 		
-		Authentication authentication =  SecurityContextHolder.getContext().getAuthentication();
-		OAuth2AuthenticationToken oauthToken = (OAuth2AuthenticationToken) authentication;
-		
-		OAuth2AuthorizedClient oauth2Client = oauth2ClientService.loadAuthorizedClient(oauthToken.getAuthorizedClientRegistrationId(), 
-				oauthToken.getName());
-		
-		String jwtAccessToken = oauth2Client.getAccessToken().getTokenValue();
-		System.out.println("jwtAccessToken = " + jwtAccessToken);
-		
-		
-		System.out.println("Principal = " + principal);
-		
-		OidcIdToken idToken = principal.getIdToken();
-		String idTokenValue = idToken.getTokenValue();
-		System.out.println("idTokenValue = " + idTokenValue);
-		
-		String url = "http://localhost:8082/albums";
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Authorization", "Bearer " + jwtAccessToken);
-		
-		HttpEntity<List<AlbumRest>> entity = new HttpEntity<>(headers);
-		
-		
-		ResponseEntity<List<AlbumRest>> responseEntity =  restTemplate.exchange(url, HttpMethod.GET, entity, new ParameterizedTypeReference<List<AlbumRest>>() {});
- 
-		List<AlbumRest> albums = responseEntity.getBody();
+
 		
 //		AlbumRest album = new AlbumRest();
 //		album.setAlbumId("albumOne");
@@ -74,8 +48,7 @@ public class AlbumsController {
 //		album2.setAlbumTitle("Album two title");
 //		album2.setAlbumUrl("http://localhost:8082/albums/2");
 // 
-        model.addAttribute("albums", albums);
-		
+
 		
 		return "albums";
 	}
